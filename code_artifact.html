@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مغامرة نمو النبات - لأطفال الروضة</title>
+    <!-- خط عربي مستدير وواضح للأطفال -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* إعدادات أساسية متوافقة مع العرض ملء الشاشة وشرائح PowerPoint 16:9 */
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #E8F5E9 0%, #FFFDE7 50%, #E0F7FA 100%);
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* ==================== آلية دوران الكارت في مكانه بدقة (Strict In-Place 3D Flip) ==================== */
+        .card-slot {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            perspective: 1000px;
+            transform: translateZ(0);
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transform-origin: center center;
+            transition: transform 0.55s cubic-bezier(0.34, 1.45, 0.64, 1);
+            cursor: pointer;
+            will-change: transform;
+        }
+
+        /* الدوران حول المحور الرأسي في نفس المكان تماماً دون أي إزاحة */
+        .card-slot.flipped .card-inner,
+        .card-slot.matched .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 1.35rem;
+            box-shadow: 0 8px 18px -4px rgba(0, 0, 0, 0.14), 0 3px 6px -2px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transform-origin: center center;
+        }
+
+        /* الوجه الخلفي للكارت (غلاف الحديقة والطبيعة المبهج) */
+        .card-back {
+            background: linear-gradient(135deg, #2E7D32 0%, #43A047 50%, #00897B 100%);
+            border: 5px solid #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotateY(0deg);
+        }
+
+        .card-back::before {
+            content: "";
+            position: absolute;
+            inset: 6px;
+            border-radius: 1rem;
+            border: 3px dashed rgba(255, 255, 255, 0.8);
+            background-image: radial-gradient(rgba(255, 255, 255, 0.3) 2px, transparent 2px);
+            background-size: 14px 14px;
+            pointer-events: none;
+        }
+
+        /* الوجه الأمامي للكارت (الصورة والاسم التوضيحي) */
+        .card-front {
+            background-color: #FFFFFF;
+            border: 5px solid #81C784;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.4rem;
+        }
+
+        /* تمييز التطابق الصحيح بإطار ذهبي/أخضر دون تحريك الكارت */
+        .card-slot.matched .card-front {
+            border-color: #2E7D32;
+            background-color: #F1F8E9;
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.28), 0 8px 18px rgba(0, 0, 0, 0.12);
+        }
+
+        /* ==================== أزرار ورسومات مبهجة للأطفال ==================== */
+        .btn-kid {
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.18);
+        }
+        .btn-kid:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.18);
+        }
+        .btn-kid:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+        }
+        .btn-kid:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: floatSlow 3.5s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.45), 0 8px 0 rgba(0,0,0,0.18); }
+            50% { box-shadow: 0 0 0 12px rgba(46, 125, 50, 0), 0 8px 0 rgba(0,0,0,0.18); }
+        }
+        .btn-pulse {
+            animation: pulseGlow 2.2s infinite;
+        }
+
+        /* قصاصات الاحتفال */
+        .confetti-piece {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            top: -20px;
+            z-index: 100;
+            pointer-events: none;
+            animation: confettiFall linear forwards;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col justify-between">
+
+    <!-- ==================== الشريط العلوي الموحد ==================== -->
+    <header class="w-full bg-white/90 backdrop-blur-md shadow-sm border-b-4 border-emerald-400 sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2">
+            <!-- شعار وعنوان اللعبة -->
+            <div class="flex items-center gap-2.5 cursor-pointer" onclick="navigateTo('start')">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-lime-500 flex items-center justify-center text-white shadow">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8Z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-xl font-black text-emerald-700 leading-tight">مغامرة نمو النبات</h1>
+                    <p class="text-[11px] sm:text-xs font-bold text-amber-600">لأطفال الروضة الأذكياء</p>
+                </div>
+            </div>
+
+            <!-- أزرار التنقل السريعة -->
+            <div class="flex items-center gap-2">
+                <!-- زر خريطة المستويات -->
+                <button id="navMapBtn" onclick="navigateTo('map')" class="hidden btn-kid bg-teal-500 hover:bg-teal-600 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm flex items-center gap-1.5">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                    </svg>
+                    <span>المستويات</span>
+                </button>
+
+                <!-- زر تخصيص الصور -->
+                <button id="navSetupBtn" onclick="navigateTo('setup')" class="btn-kid bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm flex items-center gap-1.5" title="تخصيص أو رفع صور خاصة">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>تخصيص الصور</span>
+                </button>
+
+                <!-- زر كتم/تشغيل الصوت -->
+                <button id="btnSoundToggle" onclick="toggleSound()" class="btn-kid bg-sky-500 hover:bg-sky-600 text-white font-bold p-2 rounded-xl" title="تشغيل / إيقاف الصوت">
+                    <svg id="iconSoundOn" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                    </svg>
+                    <svg id="iconSoundOff" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== الحاوية الرئيسية للشاشات ==================== -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 flex flex-col items-center justify-center relative">
+
+        <!-- ================================================================
+             الشاشة 1: شاشة البداية الرئيسية للعبة (Start Screen)
+             ================================================================ -->
+        <section id="startScreen" class="w-full max-w-3xl flex flex-col items-center justify-center text-center py-4 px-4 relative">
+            <!-- عناصر زخرفية نباتية في الخلفية -->
+            <div class="hidden sm:block absolute top-2 right-6 text-amber-400 animate-float" style="animation-delay: 0s;">
+                <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div class="hidden sm:block absolute bottom-6 left-6 text-emerald-500 animate-float" style="animation-delay: 1s;">
+                <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8Z"/></svg>
+            </div>
+
+            <!-- بطاقة الترحيب الرئيسية -->
+            <div class="bg-white/95 backdrop-blur-md rounded-[2.5rem] border-8 border-emerald-400 shadow-2xl p-6 sm:p-10 w-full relative z-10">
+                <!-- أيقونات مراحل النبات الثلاثة -->
+                <div class="flex justify-center items-center gap-3 mb-5">
+                    <!-- كارت البذرة -->
+                    <div class="w-16 h-20 sm:w-20 sm:h-24 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-800 border-4 border-white shadow-lg flex items-center justify-center transform -rotate-12 text-amber-200">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3C8.5 7 6 10.5 6 14a6 6 0 0012 0c0-3.5-2.5-7-6-11z"/></svg>
+                    </div>
+                    <!-- كارت النبتة -->
+                    <div class="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-600 border-4 border-white shadow-xl flex items-center justify-center z-10 text-white p-3">
+                        <svg class="w-14 h-14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22V10M12 10C12 6 8 4 4 5c0 4 3 7 8 5zM12 13c0-4 4-6 8-5 0 4-3 7-8 5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    </div>
+                    <!-- كارت الزهرة/الثمرة -->
+                    <div class="w-16 h-20 sm:w-20 sm:h-24 rounded-2xl bg-gradient-to-br from-rose-400 to-red-500 border-4 border-white shadow-lg flex items-center justify-center transform rotate-12 text-white">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/></svg>
+                    </div>
+                </div>
+
+                <span class="inline-block bg-emerald-100 text-emerald-800 font-extrabold px-4 py-1 rounded-full text-sm mb-3 border-2 border-emerald-200">
+                    رحلة ممتعة في عالم الطبيعة والنباتات!
+                </span>
+
+                <h2 class="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-green-500 to-amber-500 mb-3 leading-tight py-1">
+                    مغامرة نمو النبات 🌱
+                </h2>
+
+                <p class="text-slate-600 font-bold text-base sm:text-xl max-w-lg mx-auto mb-8">
+                    اكتشف مراحل نمو البذرة، وأدوات العناية بالحديقة، وأجمل الأزهار والثمار اللذيذة!
+                </p>
+
+                <!-- زر ابدأ اللعب الكبير -->
+                <div class="flex flex-col items-center gap-3">
+                    <button onclick="handleStartButtonClick()" class="btn-kid btn-pulse bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-black text-2xl sm:text-3xl px-12 py-4 sm:py-5 rounded-3xl flex items-center gap-3">
+                        <span>ابدأ اللعب</span>
+                        <svg class="w-8 h-8 transform rotate-180" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </button>
+
+                    <p id="startScreenStatus" class="text-xs sm:text-sm font-bold text-emerald-700">
+                        12 بطاقة متنوعة لمراحل نمو النبات والطبيعة عبر 3 مستويات
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             الشاشة 2: صفحة المستويات الثلاثة (خريطة المراحل المتسلسلة)
+             ================================================================ -->
+        <section id="mapScreen" class="hidden w-full max-w-5xl flex flex-col items-center justify-center py-4">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl sm:text-4xl font-black text-slate-800 mb-1">خريطة مراحل النمو</h2>
+                <p class="text-sm sm:text-lg font-bold text-emerald-700">أكمل كل مرحلة بنجاح ليُفتح لك المستوى التالي!</p>
+            </div>
+
+            <!-- حاوية المستويات الثلاثة مع خط المسار الواصل بينها -->
+            <div class="relative w-full grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch px-2">
+                <!-- خط المسار الخلفي على الشاشات الكبيرة -->
+                <div class="hidden md:block absolute top-1/2 left-16 right-16 h-4 bg-emerald-200 border-y-2 border-emerald-400 -translate-y-1/2 z-0 rounded-full"></div>
+
+                <!-- بطاقة المستوى 1 -->
+                <div id="levelCard_1" onclick="selectLevelFromMap(1)" class="relative z-10 rounded-3xl border-4 p-6 flex flex-col items-center text-center transition-all duration-300 cursor-pointer bg-white shadow-xl"></div>
+
+                <!-- بطاقة المستوى 2 -->
+                <div id="levelCard_2" onclick="selectLevelFromMap(2)" class="relative z-10 rounded-3xl border-4 p-6 flex flex-col items-center text-center transition-all duration-300 bg-white shadow-xl"></div>
+
+                <!-- بطاقة المستوى 3 -->
+                <div id="levelCard_3" onclick="selectLevelFromMap(3)" class="relative z-10 rounded-3xl border-4 p-6 flex flex-col items-center text-center transition-all duration-300 bg-white shadow-xl"></div>
+            </div>
+
+            <!-- زر إعادة ضبط التقدم لبدء المغامرة من جديد -->
+            <div class="mt-8 flex items-center gap-4">
+                <button onclick="resetProgress()" class="text-xs sm:text-sm font-bold text-slate-500 hover:text-rose-600 underline transition-colors">
+                    إعادة قفل المستويات للبدء من المستوى الأول
+                </button>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             الشاشة 3: شاشة تخصيص الصور للمعلمة (تبديل بين رسوم النبات أو صور خاصة)
+             ================================================================ -->
+        <section id="setupScreen" class="hidden w-full max-w-5xl bg-white/95 rounded-3xl shadow-xl border-4 border-amber-300 p-5 sm:p-7">
+            <div class="text-center max-w-2xl mx-auto mb-5">
+                <span class="inline-block bg-amber-100 text-amber-800 font-extrabold px-4 py-1 rounded-full text-xs sm:text-sm mb-2 border border-amber-200">
+                    إعدادات المعلمة / ولي الأمر
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-800 mb-1">اختيار نوع البطاقات</h2>
+                <p class="text-slate-600 font-semibold text-xs sm:text-base">
+                    يمكنكِ اللعب بمجموعة بطاقات <strong>نمو النبات والطبيعة (12 بطاقة متنوعة لكل مستوى)</strong> أو رفع صوركِ الخاصة من الجهاز.
+                </p>
+            </div>
+
+            <!-- أزرار التبديل بين وضع النباتات الافتراضي ووضع الصور الخاصة -->
+            <div class="flex flex-wrap justify-center gap-3 mb-6">
+                <button type="button" id="btnModePlant" onclick="switchToPlantTheme()" class="btn-kid bg-emerald-600 text-white font-extrabold px-5 py-3 rounded-2xl flex items-center gap-2 text-sm sm:text-base">
+                    <span>🌱 استخدام بطاقات نمو النبات والطبيعة (12 بطاقة)</span>
+                </button>
+
+                <label for="bulkUploadInput" class="btn-kid cursor-pointer bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold px-5 py-3 rounded-2xl flex items-center gap-2 text-sm sm:text-base">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    <span>رفع 5 صور خاصة من جهازي</span>
+                </label>
+                <input type="file" id="bulkUploadInput" accept="image/*" multiple class="hidden" onchange="handleBulkUpload(event)">
+            </div>
+
+            <!-- معاينة بطاقات المستويات الحالية -->
+            <div id="previewContainer" class="mb-6">
+                <!-- تُبنى ديناميكياً لعرض البطاقات المفعلة حالياً -->
+            </div>
+
+            <!-- مربع تنبيه داخلي -->
+            <div id="setupMessageBox" class="hidden mb-4 p-3 rounded-2xl bg-rose-100 border-2 border-rose-300 text-rose-800 font-bold text-center text-sm"></div>
+
+            <!-- زر الحفظ والعودة لشاشة البداية -->
+            <div class="flex flex-col items-center">
+                <button onclick="saveSetupAndGoStart()" class="btn-kid bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-lg sm:text-xl px-8 py-3.5 rounded-2xl flex items-center gap-2">
+                    <span>حفظ والانتقال لشاشة البداية</span>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             الشاشة 4: ساحة اللعب (Game Board Screen)
+             ================================================================ -->
+        <section id="gameScreen" class="hidden w-full flex flex-col items-center justify-center">
+            <!-- شريط معلومات المستوى -->
+            <div class="w-full max-w-4xl bg-white/95 rounded-2xl sm:rounded-3xl shadow-md border-4 border-emerald-200 px-4 py-2.5 mb-4 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span id="gameLevelBadge" class="bg-emerald-600 text-white font-black px-3.5 py-1 rounded-xl text-sm sm:text-base">
+                        المستوى 1
+                    </span>
+                    <span id="gameLevelSubtitle" class="text-slate-700 font-bold text-xs sm:text-sm">
+                        مراحل البذرة والنبتة (6 كروت)
+                    </span>
+                </div>
+
+                <!-- نجوم الأزواج المكتشفة -->
+                <div class="flex items-center gap-1.5 bg-amber-50 px-3 py-1 rounded-xl border-2 border-amber-200">
+                    <span class="font-extrabold text-amber-800 text-xs sm:text-sm">الأزواج:</span>
+                    <div id="starsContainer" class="flex items-center gap-1"></div>
+                </div>
+
+                <!-- زر إعادة خلط المستوى -->
+                <div class="flex items-center gap-2">
+                    <button onclick="initLevel(currentLevel)" class="btn-kid bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold px-3 py-1.5 rounded-xl text-xs sm:text-sm flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span>إعادة</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- شبكة الكروت: كل كارت يدور في مكانه بدقة -->
+            <div id="cardsGrid" class="w-full mx-auto grid justify-items-center items-center">
+                <!-- تُبنى الكروت هنا -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== نافذة الاحتفال عند إتمام المستوى ==================== -->
+    <div id="victoryModal" class="hidden fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] border-8 border-emerald-400 max-w-md w-full p-6 sm:p-8 text-center shadow-2xl">
+            <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-tr from-amber-300 to-yellow-500 flex items-center justify-center text-white shadow-lg animate-bounce">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            </div>
+
+            <h3 id="victoryTitle" class="text-2xl sm:text-3xl font-black text-emerald-700 mb-2">أحسنت يا مزارع المستقبل!</h3>
+            <p id="victorySubtitle" class="text-base sm:text-lg font-bold text-slate-600 mb-6">
+                لقد فتحت المستوى التالي بنجاح!
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button id="btnNextLevel" onclick="goToNextLevel()" class="btn-kid bg-gradient-to-r from-emerald-500 to-green-600 text-white font-black text-base sm:text-lg px-5 py-3 rounded-2xl flex-1 flex items-center justify-center gap-2">
+                    <span>المستوى التالي</span>
+                    <svg class="w-5 h-5 transform rotate-180" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+
+                <button onclick="goToMapFromModal()" class="btn-kid bg-sky-500 hover:bg-sky-600 text-white font-black text-base sm:text-lg px-5 py-3 rounded-2xl flex-1">
+                    خريطة المستويات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==================== 1. مكتبة رسومات مراحل نمو النبات والطبيعة (12 بطاقة متنوعة) ==================== */
+        function svgToDataUrl(svgString) {
+            return `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+        }
+
+        function getPlantThemeDecks() {
+            return {
+                // المستوى الأول: 3 بطاقات (6 كروت) — مراحل نمو البذرة
+                1: [
+                    {
+                        label: "بذرة في التربة",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#FEF3C7"/>
+                            <!-- تلة التربة -->
+                            <path d="M15 155 Q100 105 185 155 L185 185 L15 185 Z" fill="#78350F"/>
+                            <path d="M30 155 Q100 118 170 155" stroke="#92400E" stroke-width="6" fill="none" stroke-linecap="round"/>
+                            <!-- البذرة داخل التربة -->
+                            <path d="M100 92 C82 110 78 128 100 142 C122 128 118 110 100 92 Z" fill="#F59E0B" stroke="#B45309" stroke-width="4"/>
+                            <circle cx="94" cy="120" r="3" fill="#451A03"/>
+                            <circle cx="106" cy="120" r="3" fill="#451A03"/>
+                            <path d="M95 127 Q100 132 105 127" stroke="#451A03" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <!-- حبيبات تربة -->
+                            <circle cx="55" cy="165" r="4" fill="#451A03"/>
+                            <circle cx="140" cy="168" r="5" fill="#451A03"/>
+                            <circle cx="100" cy="172" r="4" fill="#451A03"/>
+                        </svg>`)
+                    },
+                    {
+                        label: "برعم صغير",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#ECFDF5"/>
+                            <!-- التربة -->
+                            <path d="M20 160 Q100 130 180 160 L180 185 L20 185 Z" fill="#78350F"/>
+                            <!-- ساق البرعم -->
+                            <path d="M100 150 Q98 115 100 92" stroke="#16A34A" stroke-width="8" fill="none" stroke-linecap="round"/>
+                            <!-- ورقتان صغيرتان للبرعم -->
+                            <path d="M100 96 C75 72 55 82 65 102 C75 114 95 106 100 96 Z" fill="#4ADE80" stroke="#15803D" stroke-width="3"/>
+                            <path d="M100 96 C125 72 145 82 135 102 C125 114 105 106 100 96 Z" fill="#22C55E" stroke="#15803D" stroke-width="3"/>
+                            <!-- قطرات ندى -->
+                            <circle cx="72" cy="65" r="5" fill="#38BDF8"/>
+                            <circle cx="132" cy="60" r="4" fill="#38BDF8"/>
+                        </svg>`)
+                    },
+                    {
+                        label: "نبتة خضراء",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#E0F2FE"/>
+                            <!-- أصيص زراعة -->
+                            <polygon points="62,135 138,135 128,182 72,182" fill="#EA580C" stroke="#9A3412" stroke-width="3"/>
+                            <rect x="56" y="124" width="88" height="14" rx="6" fill="#F97316" stroke="#9A3412" stroke-width="3"/>
+                            <!-- ساق وأوراق كبيرة -->
+                            <path d="M100 124 L100 55" stroke="#15803D" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M100 105 C65 92 48 106 60 120 C72 128 94 116 100 105 Z" fill="#22C55E" stroke="#14532D" stroke-width="3"/>
+                            <path d="M100 95 C135 82 152 96 140 110 C128 118 106 106 100 95 Z" fill="#4ADE80" stroke="#14532D" stroke-width="3"/>
+                            <path d="M100 72 C70 46 52 58 64 76 C75 86 94 80 100 72 Z" fill="#4ADE80" stroke="#14532D" stroke-width="3"/>
+                            <path d="M100 65 C130 40 148 52 136 70 C125 80 106 74 100 65 Z" fill="#22C55E" stroke="#14532D" stroke-width="3"/>
+                        </svg>`)
+                    }
+                ],
+
+                // المستوى الثاني: 4 بطاقات جديدة كلياً (8 كروت) — أدوات الزراعة والطبيعة
+                2: [
+                    {
+                        label: "إبريق الري",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#E0F7FA"/>
+                            <!-- مقبض الإبريق -->
+                            <path d="M128 85 C165 75 170 135 132 135" stroke="#0284C7" stroke-width="10" fill="none" stroke-linecap="round"/>
+                            <!-- جسم الإبريق -->
+                            <rect x="68" y="80" width="66" height="68" rx="14" fill="#38BDF8" stroke="#0369A1" stroke-width="4"/>
+                            <!-- فوهة الرش -->
+                            <path d="M68 118 L34 86 L42 76 L72 104 Z" fill="#0EA5E9" stroke="#0369A1" stroke-width="3"/>
+                            <ellipse cx="36" cy="80" rx="6" ry="12" transform="rotate(-38 36 80)" fill="#FACC15" stroke="#0369A1" stroke-width="2"/>
+                            <!-- قطرات الماء -->
+                            <path d="M22 98 C18 105 18 110 22 110 C26 110 26 105 22 98 Z" fill="#0284C7"/>
+                            <path d="M18 118 C14 125 14 130 18 130 C22 130 22 125 18 118 Z" fill="#0284C7"/>
+                            <path d="M32 112 C28 119 28 124 32 124 C36 124 36 119 32 112 Z" fill="#0284C7"/>
+                        </svg>`)
+                    },
+                    {
+                        label: "جاروف الزراعة",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#FEF9C3"/>
+                            <!-- مقبض الجاروف الخشبي -->
+                            <rect x="122" y="34" width="22" height="52" rx="10" transform="rotate(45 133 60)" fill="#D97706" stroke="#78350F" stroke-width="3"/>
+                            <!-- عنق معدني -->
+                            <line x1="115" y1="78" x2="96" y2="97" stroke="#64748B" stroke-width="10" stroke-linecap="round"/>
+                            <!-- نصل الجاروف -->
+                            <path d="M106 106 L74 74 L44 126 C38 138 42 148 54 142 L106 106 Z" fill="#94A3B8" stroke="#334155" stroke-width="4" stroke-linejoin="round"/>
+                            <!-- تربة على الجاروف -->
+                            <path d="M52 122 Q68 106 86 116 Q72 134 52 122 Z" fill="#78350F"/>
+                        </svg>`)
+                    },
+                    {
+                        label: "شمس مشرقة",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#FFFBEB"/>
+                            <circle cx="100" cy="100" r="50" fill="#FACC15" stroke="#F59E0B" stroke-width="6"/>
+                            <g stroke="#F59E0B" stroke-width="10" stroke-linecap="round">
+                                <line x1="100" y1="16" x2="100" y2="36"/>
+                                <line x1="100" y1="164" x2="100" y2="184"/>
+                                <line x1="16" y1="100" x2="36" y2="100"/>
+                                <line x1="164" y1="100" x2="184" y2="100"/>
+                                <line x1="41" y1="41" x2="55" y2="55"/>
+                                <line x1="145" y1="145" x2="159" y2="159"/>
+                                <line x1="159" y1="41" x2="145" y2="55"/>
+                                <line x1="55" y1="145" x2="41" y2="159"/>
+                            </g>
+                            <circle cx="82" cy="92" r="6" fill="#1E293B"/>
+                            <circle cx="118" cy="92" r="6" fill="#1E293B"/>
+                            <path d="M82 112 Q100 128 118 112" stroke="#1E293B" stroke-width="5" fill="none" stroke-linecap="round"/>
+                        </svg>`)
+                    },
+                    {
+                        label: "قمر ونجوم",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#1E1B4B"/>
+                            <!-- هلال القمر -->
+                            <path d="M118 36 A62 62 0 1 0 162 140 A48 48 0 1 1 118 36 Z" fill="#FDE047" stroke="#EAB308" stroke-width="3"/>
+                            <!-- نجوم متلألئة -->
+                            <polygon points="145,48 149,58 160,58 151,65 154,75 145,69 136,75 139,65 130,58 141,58" fill="#FEF08A"/>
+                            <polygon points="165,92 168,99 175,99 169,104 171,111 165,107 159,111 161,104 155,99 162,99" fill="#FDE047"/>
+                            <circle cx="128" cy="92" r="4" fill="#FEF9C3"/>
+                        </svg>`)
+                    }
+                ],
+
+                // المستوى الثالث: 5 بطاقات جديدة ومتنوعة (10 كروت) — الأزهار والثمار اللذيذة
+                3: [
+                    {
+                        label: "زهرة متفتحة",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#FDF2F8"/>
+                            <!-- الساق والأوراق -->
+                            <line x1="100" y1="115" x2="100" y2="182" stroke="#16A34A" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M100 150 C70 135 58 148 70 160 C80 166 95 156 100 150 Z" fill="#22C55E"/>
+                            <path d="M100 142 C130 127 142 140 130 152 C120 158 105 148 100 142 Z" fill="#22C55E"/>
+                            <!-- بتلات الزهرة -->
+                            <circle cx="100" cy="48" r="22" fill="#F472B6"/>
+                            <circle cx="134" cy="72" r="22" fill="#EC4899"/>
+                            <circle cx="122" cy="110" r="22" fill="#F472B6"/>
+                            <circle cx="78" cy="110" r="22" fill="#EC4899"/>
+                            <circle cx="66" cy="72" r="22" fill="#F472B6"/>
+                            <!-- قلب الزهرة -->
+                            <circle cx="100" cy="82" r="22" fill="#FACC15" stroke="#EAB308" stroke-width="3"/>
+                            <circle cx="93" cy="79" r="3" fill="#1E293B"/>
+                            <circle cx="107" cy="79" r="3" fill="#1E293B"/>
+                            <path d="M93 88 Q100 94 107 88" stroke="#1E293B" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        </svg>`)
+                    },
+                    {
+                        label: "ثمرة تفاح",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#FEF2F2"/>
+                            <path d="M100 62 C62 48 38 78 44 118 C50 156 80 172 100 164 C120 172 150 156 156 118 C162 78 138 48 100 62 Z" fill="#EF4444" stroke="#B91C1C" stroke-width="4"/>
+                            <rect x="95" y="34" width="10" height="26" rx="5" fill="#78350F"/>
+                            <path d="M102 46 Q125 24 146 36 Q128 58 102 46 Z" fill="#22C55E"/>
+                            <ellipse cx="68" cy="92" rx="8" ry="16" transform="rotate(-20 68 92)" fill="#FCA5A5" opacity="0.7"/>
+                        </svg>`)
+                    },
+                    {
+                        label: "ثمرة فراولة",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#FFF1F2"/>
+                            <!-- جسم الفراولة -->
+                            <path d="M52 74 C52 54 148 54 148 74 C148 122 116 168 100 172 C84 168 52 122 52 74 Z" fill="#F43F5E" stroke="#BE123C" stroke-width="4"/>
+                            <!-- أوراق خضراء علوية -->
+                            <path d="M100 64 L64 46 L82 68 L60 76 L92 78 L100 90 L108 78 L140 76 L118 68 L136 46 Z" fill="#22C55E" stroke="#15803D" stroke-width="2"/>
+                            <!-- بذور الفراولة الصفراء -->
+                            <circle cx="80" cy="98" r="3.5" fill="#FDE047"/>
+                            <circle cx="100" cy="95" r="3.5" fill="#FDE047"/>
+                            <circle cx="120" cy="98" r="3.5" fill="#FDE047"/>
+                            <circle cx="88" cy="122" r="3.5" fill="#FDE047"/>
+                            <circle cx="112" cy="122" r="3.5" fill="#FDE047"/>
+                            <circle cx="100" cy="145" r="3.5" fill="#FDE047"/>
+                        </svg>`)
+                    },
+                    {
+                        label: "ثمرة برتقال",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#FFF7ED"/>
+                            <circle cx="100" cy="110" r="60" fill="#FB923C" stroke="#EA580C" stroke-width="4"/>
+                            <path d="M100 50 Q122 26 146 38 Q126 60 100 50 Z" fill="#16A34A"/>
+                            <circle cx="100" cy="50" r="5" fill="#15803D"/>
+                            <!-- مسام البرتقالة -->
+                            <circle cx="76" cy="96" r="2.5" fill="#C2410C"/>
+                            <circle cx="88" cy="84" r="2.5" fill="#C2410C"/>
+                            <circle cx="70" cy="114" r="2.5" fill="#C2410C"/>
+                            <ellipse cx="124" cy="92" rx="8" ry="15" transform="rotate(25 124 92)" fill="#FED7AA" opacity="0.7"/>
+                        </svg>`)
+                    },
+                    {
+                        label: "عنقود عنب",
+                        imgSrc: svgToDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                            <rect width="200" height="200" rx="24" fill="#F5F3FF"/>
+                            <!-- غصن وورقة -->
+                            <path d="M100 56 L100 32 L116 26" stroke="#78350F" stroke-width="6" fill="none" stroke-linecap="round"/>
+                            <path d="M100 44 Q72 26 58 44 Q76 62 100 44 Z" fill="#22C55E"/>
+                            <!-- حبات العنب -->
+                            <circle cx="78" cy="76" r="18" fill="#9333EA" stroke="#6B21A8" stroke-width="3"/>
+                            <circle cx="100" cy="76" r="18" fill="#A855F7" stroke="#6B21A8" stroke-width="3"/>
+                            <circle cx="122" cy="76" r="18" fill="#9333EA" stroke="#6B21A8" stroke-width="3"/>
+                            <circle cx="88" cy="104" r="18" fill="#A855F7" stroke="#6B21A8" stroke-width="3"/>
+                            <circle cx="112" cy="104" r="18" fill="#9333EA" stroke="#6B21A8" stroke-width="3"/>
+                            <circle cx="100" cy="132" r="18" fill="#A855F7" stroke="#6B21A8" stroke-width="3"/>
+                            <circle cx="100" cy="158" r="16" fill="#9333EA" stroke="#6B21A8" stroke-width="3"/>
+                        </svg>`)
+                    }
+                ]
+            };
+        }
+
+        /* ==================== 2. الحالة العامة والتخزين ==================== */
+        const STORAGE_CUSTOM_KEY = 'kg_plant_custom_images_v1';
+        const STORAGE_MODE_KEY = 'kg_plant_use_custom_v1';
+        const STORAGE_PROGRESS_KEY = 'kg_plant_progress_v1';
+
+        let useCustomImages = false;
+        let customImages = [null, null, null, null, null];
+
+        // حالة تقدم المستويات (المستوى 1 مفتوح افتراضياً، 2 و 3 مغلقان)
+        let unlockedLevel = 1;
+        let completedLevels = { 1: false, 2: false, 3: false };
+
+        // حالة اللعب الحالي
+        let currentLevel = 1;
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let totalPairsInLevel = 3;
+        let isBoardLocked = false;
+        let soundEnabled = true;
+
+        /* ==================== 3. محرك الصوت (Web Audio API) ==================== */
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, type, duration, delay = 0, volume = 0.25) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+                gain.gain.setValueAtTime(volume, audioCtx.currentTime + delay);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + delay);
+                osc.stop(audioCtx.currentTime + delay + duration);
+            } catch (e) {}
+        }
+
+        function playFlipSound() {
+            playTone(440, 'sine', 0.1, 0, 0.2);
+            playTone(600, 'sine', 0.1, 0.04, 0.15);
+        }
+
+        function playMatchSound() {
+            playTone(523.25, 'triangle', 0.16, 0, 0.3);
+            playTone(659.25, 'triangle', 0.16, 0.09, 0.3);
+            playTone(783.99, 'triangle', 0.28, 0.18, 0.35);
+        }
+
+        function playMismatchSound() {
+            playTone(300, 'sine', 0.18, 0, 0.14);
+            playTone(250, 'sine', 0.22, 0.1, 0.14);
+        }
+
+        function playLockedSound() {
+            playTone(200, 'square', 0.12, 0, 0.1);
+            playTone(170, 'square', 0.15, 0.1, 0.1);
+        }
+
+        function playVictorySound() {
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((n, idx) => playTone(n, 'triangle', 0.22, idx * 0.11, 0.35));
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('iconSoundOn').classList.toggle('hidden', !soundEnabled);
+            document.getElementById('iconSoundOff').classList.toggle('hidden', soundEnabled);
+            if (soundEnabled) playFlipSound();
+        }
+
+        /* ==================== 4. إدارة التنقل بين الشاشات ==================== */
+        function navigateTo(screenName) {
+            const screens = ['startScreen', 'mapScreen', 'setupScreen', 'gameScreen'];
+            screens.forEach(id => document.getElementById(id).classList.add('hidden'));
+
+            document.getElementById('victoryModal').classList.add('hidden');
+            document.getElementById(`${screenName}Screen`).classList.remove('hidden');
+
+            const navMapBtn = document.getElementById('navMapBtn');
+            if (screenName === 'game') {
+                navMapBtn.classList.remove('hidden');
+            } else {
+                navMapBtn.classList.add('hidden');
+            }
+
+            if (screenName === 'map') {
+                renderLevelsMap();
+            } else if (screenName === 'setup') {
+                renderSetupPreview();
+            } else if (screenName === 'start') {
+                updateStartScreenStatus();
+            }
+        }
+
+        function handleStartButtonClick() {
+            initAudio();
+            playFlipSound();
+            navigateTo('map');
+        }
+
+        function updateStartScreenStatus() {
+            const statusEl = document.getElementById('startScreenStatus');
+            if (useCustomImages && customImages.filter(Boolean).length === 5) {
+                statusEl.textContent = "مفعّل حالياً: صوركِ الخاصة عبر 3 مستويات متدرجة";
+            } else {
+                statusEl.textContent = "12 بطاقة متنوعة لمراحل نمو النبات والطبيعة عبر 3 مستويات";
+            }
+        }
+
+        /* ==================== 5. صفحة المستويات الثلاثة (خريطة المراحل المتسلسلة) ==================== */
+        const levelsConfig = [
+            {
+                level: 1,
+                title: "المستوى الأول",
+                themeName: "البذرة والبرعم والنبتة",
+                cardsCount: 6,
+                pairsCount: 3,
+                colorBorder: "border-emerald-400",
+                badgeBg: "bg-emerald-500",
+                btnBg: "from-emerald-500 to-green-600"
+            },
+            {
+                level: 2,
+                title: "المستوى الثاني",
+                themeName: "أدوات الزراعة والطبيعة",
+                cardsCount: 8,
+                pairsCount: 4,
+                colorBorder: "border-sky-400",
+                badgeBg: "bg-sky-500",
+                btnBg: "from-sky-500 to-blue-600"
+            },
+            {
+                level: 3,
+                title: "المستوى الثالث",
+                themeName: "الأزهار والثمار المتنوعة",
+                cardsCount: 10,
+                pairsCount: 5,
+                colorBorder: "border-rose-400",
+                badgeBg: "bg-rose-500",
+                btnBg: "from-rose-500 to-pink-600"
+            }
+        ];
+
+        function renderLevelsMap() {
+            levelsConfig.forEach(cfg => {
+                const cardEl = document.getElementById(`levelCard_${cfg.level}`);
+                const isUnlocked = cfg.level <= unlockedLevel;
+                const isCompleted = completedLevels[cfg.level];
+                const subtitle = useCustomImages ? "صوركِ الخاصة" : cfg.themeName;
+
+                if (isUnlocked) {
+                    cardEl.className = `relative z-10 rounded-3xl border-4 ${cfg.colorBorder} p-6 flex flex-col items-center justify-between text-center transition-all duration-300 cursor-pointer bg-white shadow-xl hover:-translate-y-1.5`;
+                    cardEl.innerHTML = `
+                        <div class="w-16 h-16 rounded-2xl ${cfg.badgeBg} text-white font-black text-3xl flex items-center justify-center shadow-md mb-3">
+                            ${cfg.level}
+                        </div>
+
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-800 mb-1">${cfg.title}</h3>
+                        <span class="inline-block bg-emerald-50 text-emerald-800 border border-emerald-200 font-extrabold text-xs px-3 py-1 rounded-full mb-3">
+                            ${subtitle}
+                        </span>
+
+                        <p class="text-slate-600 font-bold text-sm sm:text-base mb-4">
+                            ${cfg.cardsCount} كروت (${cfg.pairsCount} أزواج)
+                        </p>
+
+                        <div class="flex items-center justify-center gap-1 mb-5">
+                            ${[1, 2, 3].map(() => `
+                                <svg class="w-7 h-7 ${isCompleted ? 'text-amber-400' : 'text-slate-200'}" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                            `).join('')}
+                        </div>
+
+                        <button type="button" class="btn-kid w-full bg-gradient-to-r ${cfg.btnBg} text-white font-black py-3 px-4 rounded-2xl text-base sm:text-lg">
+                            ${isCompleted ? 'العب مرة أخرى' : 'العب الآن ▶'}
+                        </button>
+                    `;
+                } else {
+                    cardEl.className = `relative z-10 rounded-3xl border-4 border-slate-300 p-6 flex flex-col items-center justify-between text-center bg-slate-100/90 opacity-75 cursor-not-allowed shadow-md`;
+                    cardEl.innerHTML = `
+                        <div class="w-16 h-16 rounded-2xl bg-slate-400 text-white flex items-center justify-center shadow-inner mb-3">
+                            <svg class="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                            </svg>
+                        </div>
+
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-500 mb-1">${cfg.title}</h3>
+                        <span class="inline-block bg-slate-200 text-slate-600 font-extrabold text-xs px-3 py-1 rounded-full mb-3">
+                            مغلق حالياً
+                        </span>
+
+                        <p class="text-slate-500 font-bold text-sm sm:text-base mb-4">
+                            ${cfg.cardsCount} كروت (${cfg.pairsCount} أزواج)
+                        </p>
+
+                        <div class="text-xs font-extrabold text-slate-500 bg-slate-200/80 px-3 py-2 rounded-xl w-full">
+                            أكمل المستوى ${cfg.level - 1} ليُفتح
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function selectLevelFromMap(level) {
+            if (level > unlockedLevel) {
+                playLockedSound();
+                return;
+            }
+            playFlipSound();
+            navigateTo('game');
+            initLevel(level);
+        }
+
+        function resetProgress() {
+            unlockedLevel = 1;
+            completedLevels = { 1: false, 2: false, 3: false };
+            saveProgressToStorage();
+            renderLevelsMap();
+            playFlipSound();
+        }
+
+        /* ==================== 6. شاشة تخصيص الصور والمعاينة ==================== */
+        function switchToPlantTheme() {
+            useCustomImages = false;
+            hideSetupMessage();
+            renderSetupPreview();
+            playMatchSound();
+        }
+
+        function renderSetupPreview() {
+            const container = document.getElementById('previewContainer');
+            const btnPlant = document.getElementById('btnModePlant');
+
+            if (!useCustomImages) {
+                btnPlant.classList.add('ring-4', 'ring-emerald-300');
+                const decks = getPlantThemeDecks();
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        ${[1, 2, 3].map(lvl => `
+                            <div class="bg-emerald-50/70 border-2 border-emerald-200 rounded-2xl p-3">
+                                <h4 class="font-black text-emerald-800 text-sm mb-2">
+                                    المستوى ${lvl} (${decks[lvl].length * 2} كروت): ${levelsConfig[lvl - 1].themeName}
+                                </h4>
+                                <div class="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
+                                    ${decks[lvl].map(item => `
+                                        <div class="bg-white rounded-xl border-2 border-emerald-200 p-2 flex flex-col items-center text-center shadow-sm">
+                                            <img src="${item.imgSrc}" alt="${item.label}" class="w-16 h-16 object-contain mb-1">
+                                            <span class="text-xs font-extrabold text-slate-700">${item.label}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                btnPlant.classList.remove('ring-4', 'ring-emerald-300');
+                container.innerHTML = `
+                    <div class="bg-amber-50/70 border-2 border-amber-200 rounded-2xl p-4">
+                        <h4 class="font-black text-amber-900 text-sm mb-3 text-center">الصور الخاصة المرفوعة (5 صور):</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            ${[0, 1, 2, 3, 4].map(i => `
+                                <div class="rounded-2xl border-4 ${customImages[i] ? 'border-emerald-400 bg-white' : 'border-dashed border-slate-300 bg-slate-50'} p-2 flex flex-col items-center">
+                                    <label for="fileSlot_${i}" class="cursor-pointer w-full aspect-square rounded-xl flex flex-col items-center justify-center overflow-hidden">
+                                        ${customImages[i]
+                                            ? `<img src="${customImages[i]}" class="w-full h-full object-contain">`
+                                            : `<span class="text-xs font-bold text-slate-500">+ صورة ${i + 1}</span>`
+                                        }
+                                    </label>
+                                    <input type="file" id="fileSlot_${i}" accept="image/*" class="hidden" onchange="handleSingleUpload(event, ${i})">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function compressAndReadImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const maxDim = 360;
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > maxDim || h > maxDim) {
+                        if (w > h) {
+                            h = Math.round((h * maxDim) / w);
+                            w = maxDim;
+                        } else {
+                            w = Math.round((w * maxDim) / h);
+                            h = maxDim;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    callback(canvas.toDataURL('image/png', 0.85));
+                };
+                img.onerror = function() {
+                    callback(e.target.result);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleSingleUpload(event, index) {
+            const file = event.target.files[0];
+            if (!file) return;
+            compressAndReadImage(file, (dataUrl) => {
+                customImages[index] = dataUrl;
+                useCustomImages = true;
+                hideSetupMessage();
+                renderSetupPreview();
+            });
+        }
+
+        function handleBulkUpload(event) {
+            const files = Array.from(event.target.files).slice(0, 5);
+            if (files.length === 0) return;
+            hideSetupMessage();
+            let done = 0;
+            files.forEach((file, idx) => {
+                compressAndReadImage(file, (dataUrl) => {
+                    customImages[idx] = dataUrl;
+                    done++;
+                    if (done === files.length) {
+                        useCustomImages = true;
+                        renderSetupPreview();
+                    }
+                });
+            });
+        }
+
+        function showSetupMessage(msg) {
+            const box = document.getElementById('setupMessageBox');
+            box.textContent = msg;
+            box.classList.remove('hidden');
+        }
+
+        function hideSetupMessage() {
+            document.getElementById('setupMessageBox').classList.add('hidden');
+        }
+
+        function saveSetupAndGoStart() {
+            if (useCustomImages && customImages.filter(Boolean).length < 5) {
+                showSetupMessage("يرجى إكمال رفع 5 صور خاصة أو الضغط على زر (استخدام بطاقات نمو النبات والطبيعة).");
+                return;
+            }
+            try {
+                localStorage.setItem(STORAGE_MODE_KEY, JSON.stringify(useCustomImages));
+                if (useCustomImages) {
+                    localStorage.setItem(STORAGE_CUSTOM_KEY, JSON.stringify(customImages));
+                }
+            } catch (e) {}
+            playMatchSound();
+            navigateTo('start');
+        }
+
+        function saveProgressToStorage() {
+            try {
+                localStorage.setItem(STORAGE_PROGRESS_KEY, JSON.stringify({
+                    unlockedLevel,
+                    completedLevels
+                }));
+            } catch (e) {}
+        }
+
+        function loadSavedData() {
+            try {
+                const savedMode = localStorage.getItem(STORAGE_MODE_KEY);
+                if (savedMode) useCustomImages = JSON.parse(savedMode);
+
+                const savedCustom = localStorage.getItem(STORAGE_CUSTOM_KEY);
+                if (savedCustom) {
+                    const parsed = JSON.parse(savedCustom);
+                    if (Array.isArray(parsed) && parsed.length === 5) customImages = parsed;
+                }
+
+                const savedProg = localStorage.getItem(STORAGE_PROGRESS_KEY);
+                if (savedProg) {
+                    const parsedProg = JSON.parse(savedProg);
+                    if (parsedProg.unlockedLevel) unlockedLevel = parsedProg.unlockedLevel;
+                    if (parsedProg.completedLevels) completedLevels = parsedProg.completedLevels;
+                }
+            } catch (e) {
+                useCustomImages = false;
+            }
+        }
+
+        /* ==================== 7. منطق اللعب وتوزيع البطاقات المتنوعة لكل مستوى ==================== */
+        function initLevel(level) {
+            currentLevel = level;
+            flippedCards = [];
+            matchedPairs = 0;
+            isBoardLocked = false;
+
+            totalPairsInLevel = level + 2; // 3، ثم 4، ثم 5 أزواج
+            const totalCards = totalPairsInLevel * 2;
+
+            let levelItems = [];
+            if (useCustomImages && customImages.filter(Boolean).length === 5) {
+                levelItems = customImages.slice(0, totalPairsInLevel).map((src, i) => ({
+                    imgSrc: src,
+                    label: `صورة ${i + 1}`
+                }));
+            } else {
+                // جلب المجموعة المخصصة والمتنوعة لهذا المستوى تحديداً من مكتبة النبات والطبيعة
+                const decks = getPlantThemeDecks();
+                levelItems = decks[level];
+            }
+
+            let deck = [];
+            levelItems.forEach((item, idx) => {
+                deck.push({ pairId: idx, imgSrc: item.imgSrc, label: item.label });
+                deck.push({ pairId: idx, imgSrc: item.imgSrc, label: item.label });
+            });
+
+            // خلط الكروت عشوائياً (Fisher-Yates)
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+
+            const cfg = levelsConfig[level - 1];
+            document.getElementById('gameLevelBadge').textContent = `المستوى ${level}`;
+            document.getElementById('gameLevelSubtitle').textContent = `${useCustomImages ? 'صوركِ الخاصة' : cfg.themeName} (${totalCards} كروت)`;
+
+            updateStarsDisplay();
+            renderCardsGrid(deck, level);
+        }
+
+        function updateStarsDisplay() {
+            const container = document.getElementById('starsContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < totalPairsInLevel; i++) {
+                const isEarned = i < matchedPairs;
+                const star = document.createElement('span');
+                star.innerHTML = `
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 transition-colors duration-300 ${isEarned ? 'text-amber-400' : 'text-slate-300'}" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                `;
+                container.appendChild(star);
+            }
+        }
+
+        function renderCardsGrid(deck, level) {
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = '';
+
+            if (level === 1) {
+                grid.className = "w-full max-w-2xl grid grid-cols-3 gap-3 sm:gap-5 mx-auto";
+            } else if (level === 2) {
+                grid.className = "w-full max-w-3xl grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mx-auto";
+            } else {
+                grid.className = "w-full max-w-4xl grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-4 mx-auto";
+            }
+
+            deck.forEach((cardData, idx) => {
+                const slot = document.createElement('div');
+                slot.className = "card-slot max-w-[175px]";
+                slot.dataset.pairId = cardData.pairId;
+                slot.dataset.index = idx;
+
+                slot.innerHTML = `
+                    <div class="card-inner">
+                        <!-- الوجه الخلفي للكارت (غلاف الحديقة) -->
+                        <div class="card-face card-back">
+                            <div class="relative z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/95 shadow flex items-center justify-center text-emerald-600">
+                                <svg class="w-8 h-8 sm:w-9 sm:h-9" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8Z"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- الوجه الأمامي للكارت (الرسمة + الاسم التعليمي للطفل) -->
+                        <div class="card-face card-front">
+                            <div class="w-full flex-grow flex items-center justify-center overflow-hidden">
+                                <img src="${cardData.imgSrc}" alt="${cardData.label}" class="w-full h-full object-contain rounded-lg pointer-events-none">
+                            </div>
+                            <span class="w-full text-center bg-emerald-50 text-emerald-900 font-extrabold text-[11px] sm:text-xs py-0.5 px-1 rounded-lg truncate">
+                                ${cardData.label}
+                            </span>
+                        </div>
+                    </div>
+                `;
+
+                slot.addEventListener('click', () => handleCardClick(slot));
+                grid.appendChild(slot);
+            });
+        }
+
+        function handleCardClick(slot) {
+            if (isBoardLocked) return;
+            if (slot.classList.contains('flipped') || slot.classList.contains('matched')) return;
+
+            slot.classList.add('flipped');
+            playFlipSound();
+            flippedCards.push(slot);
+
+            if (flippedCards.length === 2) {
+                checkForMatch();
+            }
+        }
+
+        function checkForMatch() {
+            isBoardLocked = true;
+            const [card1, card2] = flippedCards;
+            const isMatch = card1.dataset.pairId === card2.dataset.pairId;
+
+            if (isMatch) {
+                setTimeout(() => {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    playMatchSound();
+
+                    matchedPairs++;
+                    updateStarsDisplay();
+
+                    flippedCards = [];
+                    isBoardLocked = false;
+
+                    if (matchedPairs === totalPairsInLevel) {
+                        setTimeout(handleLevelComplete, 500);
+                    }
+                }, 300);
+            } else {
+                const hideDelay = 1100 - (currentLevel * 100);
+                setTimeout(() => {
+                    playMismatchSound();
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    flippedCards = [];
+                    isBoardLocked = false;
+                }, hideDelay);
+            }
+        }
+
+        /* ==================== 8. إتمام المستوى وفتح المستوى التالي بالتسلسل ==================== */
+        function handleLevelComplete() {
+            playVictorySound();
+            launchConfetti();
+
+            completedLevels[currentLevel] = true;
+            if (currentLevel < 3 && unlockedLevel < currentLevel + 1) {
+                unlockedLevel = currentLevel + 1;
+            }
+            saveProgressToStorage();
+
+            const modal = document.getElementById('victoryModal');
+            const title = document.getElementById('victoryTitle');
+            const subtitle = document.getElementById('victorySubtitle');
+            const btnNext = document.getElementById('btnNextLevel');
+
+            if (currentLevel < 3) {
+                title.textContent = "أحسنت يا مزارع المستقبل! 🌱";
+                subtitle.textContent = `أنهيت المستوى ${currentLevel} بنجاح، وتم فتح المستوى ${currentLevel + 1}!`;
+                btnNext.classList.remove('hidden');
+            } else {
+                title.textContent = "مبروك يا بطل الطبيعة! 🏆🌻";
+                subtitle.textContent = "لقد أتممت جميع مراحل نمو النبات والثمار بنجاح!";
+                btnNext.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function goToNextLevel() {
+            document.getElementById('victoryModal').classList.add('hidden');
+            if (currentLevel < 3) {
+                initLevel(currentLevel + 1);
+            }
+        }
+
+        function goToMapFromModal() {
+            document.getElementById('victoryModal').classList.add('hidden');
+            navigateTo('map');
+        }
+
+        function launchConfetti() {
+            const colors = ['#4CAF50', '#FFD740', '#38BDF8', '#F43F5E', '#A855F7', '#FB923C'];
+            for (let i = 0; i < 45; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece rounded-sm';
+                piece.style.left = Math.random() * 100 + 'vw';
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.animationDuration = (Math.random() * 1.4 + 1.4) + 's';
+                piece.style.animationDelay = (Math.random() * 0.3) + 's';
+                document.body.appendChild(piece);
+                setTimeout(() => piece.remove(), 3200);
+            }
+        }
+
+        /* ==================== 9. التهيئة عند فتح الصفحة ==================== */
+        window.onload = function() {
+            loadSavedData();
+            navigateTo('start');
+        };
+    </script>
+</body>
+</html>
